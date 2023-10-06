@@ -39,6 +39,7 @@ def get_page(url: str) -> str:
     '''
     return requests.get(url).text
 
+
 if __name__ == "__main__":
     # Test the get_page function with caching
     url = "http://google.com"

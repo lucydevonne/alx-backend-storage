@@ -1,33 +1,42 @@
 #!/usr/bin/env python3
-"""track page visits and cache"""
-from functools import wraps
-from redis import Redis
+"""
+web cache and tracker
+"""
+
+import redis
 import requests
-from typing import Callable
+from functools import wraps
+
+r = redis.Redis()
 
 
-url_arg = 'http://slowwly.robertomurray.co.uk'
-redis_cli = Redis()
+def url_access_count(method):
+    """decorator for get_page function"""
+    @wraps(method)
+    def wrapper(url):
+        """wrapper function"""
+        key = "cached:" + url
+        cached_value = r.get(key)
+        if cached_value:
+            return cached_value.decode("utf-8")
 
+            # Get new content and update cache
+        key_count = "count:" + url
+        html_content = method(url)
 
-def track_access(func: Callable):
-    """Decorator function to track url access"""
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        """Wrapper function"""
-        url_key = "count:{}".format(*args)
-        incr_val = redis_cli.incr(url_key, 1)
-        redis_cli.set(url_key, incr_val, ex=10, xx=True)
-        # print(incr_val)
-        return func(args, **kwargs)
+        r.incr(key_count)
+        r.set(key, html_content, ex=10)
+        r.expire(key, 10)
+        return html_content
     return wrapper
 
 
-@track_access
+@url_access_count
 def get_page(url: str) -> str:
-    """retrieve url page"""
-    try:
-        req = requests.get(url)
-        return req.text
-    except Exception:
-        return ""
+    """obtain the HTML content of a particular"""
+    results = requests.get(url)
+    return results.text
+
+
+if __name__ == "__main__":
+    get_page('http://slowwly.robertomurray.co.uk'

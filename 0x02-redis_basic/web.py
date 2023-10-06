@@ -25,7 +25,7 @@ def data_cacher(method: Callable) -> Callable:
             return result.decode('utf-8')
         result = method(url)
         # Remove the line that resets the count
-        redis_store.setex(f'result:{url}', 10, result)  # Cache with expiration time
+        redis_store.setex(f'result:{url}', 10, result)
         return result
 
     return invoker
@@ -44,4 +44,3 @@ if __name__ == "__main__":
     url = "http://google.com"
     content = get_page(url)
     print(content)
-

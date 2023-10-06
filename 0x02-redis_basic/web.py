@@ -19,7 +19,7 @@ def data_cacher(method: Callable) -> Callable:
         '''The wrapper function for caching the output.
         '''
         # Increment the count
-        redis_store.incr(f'count:{url}', amount=1)
+        redis_store.incr(f'count:{url}', amount=0)
         result = redis_store.get(f'result:{url}')
         if result:
             return result.decode('utf-8')

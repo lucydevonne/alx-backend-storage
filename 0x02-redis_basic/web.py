@@ -7,7 +7,7 @@ from functools import wraps
 from typing import Callable
 
 redis_store = redis.Redis()
-'''The module-level Redis instance.
+'''The module-lvl Redis instance
 '''
 
 
@@ -34,7 +34,7 @@ def data_cacher(method: Callable) -> Callable:
 @data_cacher
 def get_page(url: str) -> str:
     '''Returns the content of a URL after caching the request's response,
-    and tracking the request.
+    and tracking the request. Caching is implemented using Redis.
     '''
     return requests.get(url).text
 
@@ -44,3 +44,4 @@ if __name__ == "__main__":
     url = "http://google.com"
     content = get_page(url)
     print(content)
+

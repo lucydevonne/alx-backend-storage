@@ -1,34 +1,33 @@
 #!/usr/bin/env python3
-""" expiring web cache module """
-
-import redis
+"""track page visits and cache"""
+from functools import wraps
+from redis import Redis
 import requests
 from typing import Callable
-from functools import wraps
-
-redis = redis.Redis()
 
 
-def wrap_requests(fn: Callable) -> Callable:
-    """ Decorator wrapper """
+url_arg = 'http://slowwly.robertomurray.co.uk'
+redis_cli = Redis()
 
-    @wraps(fn)
-    def wrapper(url):
-        """ Wrapper for decorator guy """
-        redis.incr(f"count:{url}")
-        cached_response = redis.get(f"cached:{url}")
-        if cached_response:
-            return cached_response.decode('utf-8')
-        result = fn(url)
-        redis.setex(f"cached:{url}", 10, result)
-        return result
 
+def track_access(func: Callable):
+    """Decorator function to track url access"""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        """Wrapper function"""
+        url_key = "count:{}".format(*args)
+        incr_val = redis_cli.incr(url_key, 1)
+        redis_cli.set(url_key, incr_val, ex=10, xx=True)
+        # print(incr_val)
+        return func(args, **kwargs)
     return wrapper
 
 
-@wrap_requests
+@track_access
 def get_page(url: str) -> str:
-    """get page self descriptive
-    """
-    response = requests.get(url)
-    return response.text
+    """retrieve url page"""
+    try:
+        req = requests.get(url)
+        return req.text
+    except Exception:
+        return ""
